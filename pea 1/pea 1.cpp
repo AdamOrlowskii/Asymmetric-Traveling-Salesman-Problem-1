@@ -39,7 +39,7 @@ vector<vector<int>> wczytywanie_macierzy(const string& nazwa_pliku) {
 	}
 	int liczba_miast;
 	plik >> liczba_miast;
-	vector<vector<int>> macierz_kosztow(liczba_miast, vector<int>(liczba_miast, -1);
+	vector<vector<int>> macierz_kosztow(liczba_miast, vector<int>(liczba_miast, -1));
 	for (int i = 0; i < liczba_miast; i++) {
 		for (int j = 0; j < liczba_miast; j++) {
 			plik >> macierz_kosztow[i][j];
