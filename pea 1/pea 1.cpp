@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
+#include <fstream>
 using namespace std;
 
 
@@ -23,6 +24,25 @@ vector<vector<int>> losowanie_macierzy(int liczba_miast) {
 			if (i != j) {
 				macierz_kosztow[i][j] = rand() % 99 + 1;
 			}
+		}
+	}
+	return macierz_kosztow;
+}
+
+vector<vector<int>> wczytywanie_macierzy(const string& nazwa_pliku) {
+
+	ifstream plik(nazwa_pliku);
+
+	if (!plik.is_open()) {
+		cout << "Bład otwierania pliku!" << endl;
+		return {};
+	}
+	int liczba_miast;
+	plik >> liczba_miast;
+	vector<vector<int>> macierz_kosztow(liczba_miast, vector<int>(liczba_miast, -1);
+	for (int i = 0; i < liczba_miast; i++) {
+		for (int j = 0; j < liczba_miast; j++) {
+			plik >> macierz_kosztow[i][j];
 		}
 	}
 	return macierz_kosztow;
