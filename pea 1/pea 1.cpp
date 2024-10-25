@@ -5,18 +5,10 @@
 #include <ctime>
 #include <fstream>
 #include <chrono>
+#include <limits>
 using namespace std;
 using namespace std::chrono;
 
-
-
-//vector<int> generowanie_wektorow(int liczba_miast){
-//	vector<int> miasta;
-//	for (int i = 0; i < liczba_miast; i++) {
-//		miasta.push_back(i + 1);
-//	}
-//	return miasta;
-//}
 
 vector<vector<int>> losowanie_macierzy(int liczba_miast) {
 	vector<vector<int>> macierz_kosztow(liczba_miast, vector<int>(liczba_miast, -1));
@@ -73,6 +65,41 @@ int brute_force(const vector<vector<int>>& macierz_kosztow) {
 	return minimalny_koszt;
 }
 
+void branch_and_bound(const vector<vector<int>>& macierz_kosztow, vector<bool>& odwiedzone, int poziom, int aktualny_koszt, int& najlepszy_koszt, int aktualne_miasto, int liczba_miast) {
+	if (poziom == liczba_miast) {
+		// zakończyliśmy trasę, dodajemy koszt powrotu do miasta startowego
+		aktualny_koszt += macierz_kosztow[aktualne_miasto][0];
+		if (aktualny_koszt < najlepszy_koszt) {
+			najlepszy_koszt = aktualny_koszt;
+		}
+		return;
+	}
+
+	// przegladanie wszystkich miast
+	for (int i = 0; i < liczba_miast; i++) {
+		if (!odwiedzone[i] && macierz_kosztow[aktualne_miasto][i] != -1) {
+			int przyszly_koszt = aktualny_koszt + macierz_kosztow[aktualne_miasto][i];
+			//przycinanie
+			if (przyszly_koszt >= najlepszy_koszt) {
+				continue;
+			}
+			//odwiedź miasto i kontynuuj
+			odwiedzone[i] = true;
+			branch_and_bound(macierz_kosztow, odwiedzone, poziom + 1, przyszly_koszt, najlepszy_koszt, i, liczba_miast);
+			odwiedzone[i] = false; // cofamy się (backtracking)
+		}
+	}
+}
+
+int branch_and_bound_main(const vector<vector<int>>& macierz_kosztow) {
+	int liczba_miast = macierz_kosztow.size();
+	vector<bool> odwiedzone(liczba_miast, false);
+	odwiedzone[0] = true;
+	int najlepszy_koszt = INT_MAX;
+	branch_and_bound(macierz_kosztow, odwiedzone, 1, 0, najlepszy_koszt, 0, liczba_miast);
+	return najlepszy_koszt;
+}
+
 
 int main()
 {
@@ -108,16 +135,23 @@ int main()
 				}
 				cout << endl;
 			}
+			// pomiar czasu brute force
+			auto start_brute = high_resolution_clock::now(); // poczatek pomiaru czasu
+			int minimalny_koszt_brute = brute_force(macierz_kosztow);
+			auto stop_brute = high_resolution_clock::now(); // koniec pomiaru czasu
+			auto czas_wykonania_brute = duration_cast<milliseconds>(stop_brute - start_brute); // obliczenie czasu
 
-			auto start = high_resolution_clock::now(); // poczatek pomiaru czasu
+			cout << "Minimalny koszt brute force: " << minimalny_koszt_brute << endl;
+			cout << "Czas wykonania brute force: " << czas_wykonania_brute.count() << " ms\n" << endl;
 
-			int minimalny_koszt = brute_force(macierz_kosztow);
+			// pomiar czasu branch and bound
+			auto start_bnb = high_resolution_clock::now(); // poczatek pomiaru czasu
+			int minimalny_koszt_bnb = branch_and_bound_main(macierz_kosztow);
+			auto stop_bnb = high_resolution_clock::now(); // koniec pomiaru czasu
+			auto czas_wykonania_bnb = duration_cast<milliseconds>(stop_bnb - start_bnb); // obliczenie czasu
 
-			auto stop = high_resolution_clock::now(); // koniec pomiaru czasu
-			auto czas_wykonania = duration_cast<milliseconds>(stop - start); // obliczenie czasu
-
-			cout << "Minimalny koszt: " << minimalny_koszt << endl;
-			cout << "Czas wykonania: " << czas_wykonania.count() << " ms\n" << endl;
+			cout << "Minimalny koszt branch and bound: " << minimalny_koszt_bnb << endl;
+			cout << "Czas wykonania branch and bound: " << czas_wykonania_bnb.count() << " ms\n" << endl;
 		}
 		break;
 	}
