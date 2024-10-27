@@ -100,6 +100,15 @@ int branch_and_bound_main(const vector<vector<int>>& macierz_kosztow) {
 	return najlepszy_koszt;
 }
 
+void zapis_do_csv(const string& nazwa_pliku, int liczba_miast, int czas_brute, int koszt_brute, int czas_bnb, int koszt_bnb) {
+	ofstream plik_csv(nazwa_pliku, ios::app);
+	if (!plik_csv.is_open()) {
+		cout << "Blad otwierania pliku csv" << endl;
+		return;
+	}
+	plik_csv <<"\n" << liczba_miast << ";" << koszt_brute << ";" << czas_brute << ";" << koszt_bnb << ";" << czas_bnb;
+	plik_csv.close();
+}
 
 int main()
 {
@@ -109,6 +118,10 @@ int main()
 	cin >> menu;
 
 	vector<vector<int>> macierz_kosztow;
+	string nazwa_pliku_csv = "wyniki.csv";
+	ofstream plik_csv(nazwa_pliku_csv);
+	plik_csv << "N;Koszt Brute Force;Czas Brute Force;Koszt B&B;Czas B&B";
+	plik_csv.close();
 
 	switch (menu){
 	case 1: {
@@ -122,7 +135,7 @@ int main()
 		int liczba_miast, ile_razy;
 		cout << "Liczba miast: ";
 		cin >> liczba_miast;
-		cout << "Liczba wywolan algorytmu: ";
+		cout << "Liczba wywolan algorytmow: ";
 		cin >> ile_razy;
 
 		for (int k = 0; k < ile_razy; k++) {
@@ -152,6 +165,8 @@ int main()
 
 			cout << "Minimalny koszt branch and bound: " << minimalny_koszt_bnb << endl;
 			cout << "Czas wykonania branch and bound: " << czas_wykonania_bnb.count() << " ms\n" << endl;
+			zapis_do_csv(nazwa_pliku_csv, liczba_miast, czas_wykonania_brute.count(), minimalny_koszt_brute, czas_wykonania_bnb.count(), minimalny_koszt_bnb);
+
 		}
 		break;
 	}
