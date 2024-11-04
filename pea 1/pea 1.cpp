@@ -117,129 +117,103 @@ int branch_and_bound_main(const vector<vector<int>>& macierz_kosztow, vector<int
 //	plik_csv.close();
 //}
 
-int main()
+int main() // aktualne zmiany ---------------- przed całą pętlą while wrzucam pytanie o wczytanie/wygenerowanie macierzy. Powinno to załatwić problem menu
+// ----------- nie załatwi, trzeba przebudować całego maina by pełne menu wyświetlało się po każdej decyzji
+// znaczy przeprojektować, może wystarczy tylko scalić 2 switche w 1
+// trzeba też coś pomyśleć o zapisie do csv, ewentualnie zrobić osobny tryb dla mierzwy a osobny do sprawka !!!
+// przesunąć liczbę wywołań algorytmów na póżniej, po wybraniu algorytmu, nie, lepiej w ogóle usunąć i wrzucić dopiero do trybu do sprawozdania
 {
+	srand(time(0));
+	vector<vector<int>> macierz_kosztow;
+	vector<int> najlepsza_sciezka_brute;
+	vector<int> najlepsza_sciezka_bnb;
+	string nazwa_pliku_csv = "wyniki.csv";
+	ofstream plik_csv(nazwa_pliku_csv);
+
+
 	int petla = 1;
 	while (petla == 1) {
-
-		srand(time(0));
+		
 		int menu = 0;
-		cout << "MENU:\n1. Wczytaj plik tekstowy.\n2. Wygeneruj dane losowo." << endl;
+		cout << "MENU:\n1. Wczytaj plik tekstowy.\n2. Wygeneruj dane losowo.\n3. Brute Force. \n4. Branch and Bound. \n5. Koniec." << endl; // opcje całego menu
 		cin >> menu;
 
-		vector<vector<int>> macierz_kosztow;
-		string nazwa_pliku_csv = "wyniki.csv";
-		ofstream plik_csv(nazwa_pliku_csv);
-		//plik_csv << "N;Koszt Brute Force;Czas Brute Force;Koszt B&B;Czas B&B";
-		//plik_csv.close();
-
 		switch (menu) {
+
 		case 1: {
 			string nazwa_pliku;
 			cout << "Nazwa pliku: ";
 			cin >> nazwa_pliku;
 			macierz_kosztow = wczytywanie_macierzy(nazwa_pliku);
-			vector<int> najlepsza_sciezka_brute;
-			vector<int> najlepsza_sciezka_bnb;
-
-			int decyzja = 0;
-			cout << "\n1. Brute force czy 2. Branch and Bound?" << endl;
-			cin >> decyzja;
-			switch (decyzja) {
-			case 1: {
-				// pomiar czasu brute force
-				auto start_brute = high_resolution_clock::now(); // poczatek pomiaru czasu
-				int minimalny_koszt_brute = brute_force(macierz_kosztow, najlepsza_sciezka_brute);
-				auto stop_brute = high_resolution_clock::now(); // koniec pomiaru czasu
-				auto czas_wykonania_brute = duration_cast<milliseconds>(stop_brute - start_brute); // obliczenie czasu
-
-				cout << "Minimalny koszt brute force: " << minimalny_koszt_brute << endl;
-				cout << "Najkrotsza sciezka brute force: ";
-				for (int miasto : najlepsza_sciezka_brute) cout << miasto << " ";
-				cout << "\nCzas wykonania brute force: " << czas_wykonania_brute.count() << " ms" << endl;
-				break;
+			if (macierz_kosztow.empty()) {
+				cout << "Nie udalo sie wczytac macierzy! " << endl;
 			}
-				  /*int czas_wykonania_brute = 0;
-				  int minimalny_koszt_brute = 0;*/
-			case 2: {
-				// pomiar czasu branch and bound
-				auto start_bnb = high_resolution_clock::now(); // poczatek pomiaru czasu
-				int minimalny_koszt_bnb = branch_and_bound_main(macierz_kosztow, najlepsza_sciezka_bnb);
-				auto stop_bnb = high_resolution_clock::now(); // koniec pomiaru czasu
-				auto czas_wykonania_bnb = duration_cast<milliseconds>(stop_bnb - start_bnb); // obliczenie czasu
-
-				cout << "Minimalny koszt branch and bound: " << minimalny_koszt_bnb << endl;
-				cout << "Najkrotsza sciezka branch and bound: ";
-				for (int miasto : najlepsza_sciezka_bnb) cout << miasto << " ";
-				cout << "\nCzas wykonania branch and bound: " << czas_wykonania_bnb.count() << " ms\n" << endl;
-				//zapis_do_csv(nazwa_pliku_csv, liczba_miast, czas_wykonania_brute.count(), minimalny_koszt_brute, czas_wykonania_bnb.count(), minimalny_koszt_bnb);
-				break;
+			else {
+				cout << "Macierz wczytana poprawnie. " << endl;
 			}
-
-			}
+			break;
 		}
-			  break;
+
 		case 2: {
-			int liczba_miast, ile_razy;
+			int liczba_miast;
 			cout << "Liczba miast: ";
 			cin >> liczba_miast;
-			cout << "Liczba wywolan algorytmow: ";
-			cin >> ile_razy;
 
-			for (int k = 0; k < ile_razy; k++) {
 				macierz_kosztow = losowanie_macierzy(liczba_miast);
-				vector<int> najlepsza_sciezka_brute;
-				vector<int> najlepsza_sciezka_bnb;
 
-				cout << "Macierz kosztow: iteracja " << k + 1 << ":" << endl;
 				for (int i = 0; i < macierz_kosztow.size(); i++) {
 					for (int j = 0; j < macierz_kosztow[i].size(); j++) {
 						cout << macierz_kosztow[i][j] << " ";
 					}
 					cout << endl;
 				}
-				int decyzjaa = 0;
-				cout << "\n1. Brute force czy 2. Branch and Bound?" << endl;
-				cin >> decyzjaa;
-				switch (decyzjaa) {
-				case 1: {
-					// pomiar czasu brute force
-					auto start_brute = high_resolution_clock::now(); // poczatek pomiaru czasu
-					int minimalny_koszt_brute = brute_force(macierz_kosztow, najlepsza_sciezka_brute);
-					auto stop_brute = high_resolution_clock::now(); // koniec pomiaru czasu
-					auto czas_wykonania_brute = duration_cast<milliseconds>(stop_brute - start_brute); // obliczenie czasu
-
-					cout << "Minimalny koszt brute force: " << minimalny_koszt_brute << endl;
-					cout << "Najkrotsza sciezka brute force: ";
-					for (int miasto : najlepsza_sciezka_brute) cout << miasto << " ";
-					cout << "\nCzas wykonania brute force: " << czas_wykonania_brute.count() << " ms" << endl;
-					break;
-				}
-					  /*int czas_wykonania_brute = 0;
-					  int minimalny_koszt_brute = 0;*/
-				case 2: {
-					// pomiar czasu branch and bound
-					auto start_bnb = high_resolution_clock::now(); // poczatek pomiaru czasu
-					int minimalny_koszt_bnb = branch_and_bound_main(macierz_kosztow, najlepsza_sciezka_bnb);
-					auto stop_bnb = high_resolution_clock::now(); // koniec pomiaru czasu
-					auto czas_wykonania_bnb = duration_cast<milliseconds>(stop_bnb - start_bnb); // obliczenie czasu
-
-					cout << "Minimalny koszt branch and bound: " << minimalny_koszt_bnb << endl;
-					cout << "Najkrotsza sciezka branch and bound: ";
-					for (int miasto : najlepsza_sciezka_bnb) cout << miasto << " ";
-					cout << "\nCzas wykonania branch and bound: " << czas_wykonania_bnb.count() << " ms\n" << endl;
-					//zapis_do_csv(nazwa_pliku_csv, liczba_miast, czas_wykonania_brute.count(), minimalny_koszt_brute, czas_wykonania_bnb.count(), minimalny_koszt_bnb);
-					break;
-				}
-				}
-
+				break;
 			}
+
+		case 3: {
+			if (macierz_kosztow.empty()) {
+				cout << "Najpierw nalezy wczytac / wygenerowac macierz!" << endl;
+				break;
+			}
+			// pomiar czasu brute force
+			auto start_brute = high_resolution_clock::now(); // poczatek pomiaru czasu
+			int minimalny_koszt_brute = brute_force(macierz_kosztow, najlepsza_sciezka_brute);
+			auto stop_brute = high_resolution_clock::now(); // koniec pomiaru czasu
+			auto czas_wykonania_brute = duration_cast<milliseconds>(stop_brute - start_brute); // obliczenie czasu
+
+			cout << "Minimalny koszt brute force: " << minimalny_koszt_brute << endl;
+			cout << "Najkrotsza sciezka brute force: ";
+			for (int miasto : najlepsza_sciezka_brute) cout << miasto << " ";
+			cout << "\nCzas wykonania brute force: " << czas_wykonania_brute.count() << " ms" << endl;
+			break;
+		}
+
+		case 4: {
+			if (macierz_kosztow.empty()) {
+				cout << "Najpierw nalezy wczytac / wygenerowac macierz!" << endl;
+				//break;
+			}
+			// pomiar czasu branch and bound
+			auto start_bnb = high_resolution_clock::now(); // poczatek pomiaru czasu
+			int minimalny_koszt_bnb = branch_and_bound_main(macierz_kosztow, najlepsza_sciezka_bnb);
+			auto stop_bnb = high_resolution_clock::now(); // koniec pomiaru czasu
+			auto czas_wykonania_bnb = duration_cast<milliseconds>(stop_bnb - start_bnb); // obliczenie czasu
+
+			cout << "Minimalny koszt branch and bound: " << minimalny_koszt_bnb << endl;
+			cout << "Najkrotsza sciezka branch and bound: ";
+			for (int miasto : najlepsza_sciezka_bnb) cout << miasto << " ";
+			cout << "\nCzas wykonania branch and bound: " << czas_wykonania_bnb.count() << " ms\n" << endl;
+			break;
+		}
+
+		case 5: {
+			cout << "Koniec programu." << endl;
+			petla = 0;
 			break;
 		}
 		default:
-			cout << "Zly wybor, nalezalo wpisac \"1\" lub \"2\"." << endl;
-			return 1;
+			cout << "Zly wybor, nalezalo wpisac \"1\" lub \"2\" lub \"3\" lub \"4\" lub \"5\"." << endl;
 		}
-		
 	}
+	return 0;
 }
