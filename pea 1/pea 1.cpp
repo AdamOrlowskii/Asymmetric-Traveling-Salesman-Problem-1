@@ -22,7 +22,7 @@ vector<vector<int>> losowanie_macierzy(int liczba_miast) {
 	return macierz_kosztow;
 }
 
-vector<vector<int>> wczytywanie_macierzy(const string& nazwa_pliku) {
+vector<vector<int>> wczytywanie_macierzy(const string& nazwa_pliku, int& liczba_miast) {
 
 	ifstream plik(nazwa_pliku);
 
@@ -30,7 +30,7 @@ vector<vector<int>> wczytywanie_macierzy(const string& nazwa_pliku) {
 		cout << "Blad otwierania pliku!" << endl;
 		return {};
 	}
-	int liczba_miast;
+
 	plik >> liczba_miast;
 	vector<vector<int>> macierz_kosztow(liczba_miast, vector<int>(liczba_miast, -1));
 	for (int i = 0; i < liczba_miast; i++) {
@@ -41,8 +41,7 @@ vector<vector<int>> wczytywanie_macierzy(const string& nazwa_pliku) {
 	return macierz_kosztow;
 }
 
-int brute_force(const vector<vector<int>>& macierz_kosztow, vector<int>& najlepsza_sciezka) {
-	int liczba_miast = macierz_kosztow.size();
+int brute_force(const vector<vector<int>>& macierz_kosztow, vector<int>& najlepsza_sciezka, int& liczba_miast) {
 	vector<int> miasta; // tworzymy wektor miast pomijając miasta[0] bo to miasto startowe
 	for (int i = 1; i < liczba_miast; i++) {
 		miasta.push_back(i);
@@ -97,8 +96,7 @@ void branch_and_bound(const vector<vector<int>>& macierz_kosztow, vector<bool>& 
 	}
 }
 
-int branch_and_bound_main(const vector<vector<int>>& macierz_kosztow, vector<int>& najlepsza_sciezka) {
-	int liczba_miast = macierz_kosztow.size();
+int branch_and_bound_main(const vector<vector<int>>& macierz_kosztow, vector<int>& najlepsza_sciezka, int& liczba_miast) {
 	vector<bool> odwiedzone(liczba_miast, false); // tworzymy vetor bool wielkościowo równy liczbie miast i ustawiony wszędzie na false
 	odwiedzone[0] = true; // ustawiamy miasto początkowe jako odwiedzone
 	int najlepszy_koszt = INT_MAX;
@@ -129,13 +127,14 @@ int main() // aktualne zmiany ---------------- przed całą pętlą while wrzuca
 	vector<int> najlepsza_sciezka_bnb;
 	string nazwa_pliku_csv = "wyniki.csv";
 	ofstream plik_csv(nazwa_pliku_csv);
+	int liczba_miast = 0;
 
 
 	int petla = 1;
 	while (petla == 1) {
 		
 		int menu = 0;
-		cout << "MENU:\n1. Wczytaj plik tekstowy.\n2. Wygeneruj dane losowo.\n3. Brute Force. \n4. Branch and Bound. \n5. Koniec." << endl; // opcje całego menu
+		cout << "MENU:\n1. Wczytaj plik tekstowy.\n2. Wygeneruj dane losowo.\n3. Brute Force. \n4. Branch and Bound. \n5. Programowanie dynamiczne. \n6. Koniec." << endl; // opcje całego menu
 		cin >> menu;
 
 		switch (menu) {
@@ -144,7 +143,7 @@ int main() // aktualne zmiany ---------------- przed całą pętlą while wrzuca
 			string nazwa_pliku;
 			cout << "Nazwa pliku: ";
 			cin >> nazwa_pliku;
-			macierz_kosztow = wczytywanie_macierzy(nazwa_pliku);
+			macierz_kosztow = wczytywanie_macierzy(nazwa_pliku, liczba_miast);
 			if (macierz_kosztow.empty()) {
 				cout << "Nie udalo sie wczytac macierzy! " << endl;
 			}
@@ -155,20 +154,19 @@ int main() // aktualne zmiany ---------------- przed całą pętlą while wrzuca
 		}
 
 		case 2: {
-			int liczba_miast;
 			cout << "Liczba miast: ";
 			cin >> liczba_miast;
 
-				macierz_kosztow = losowanie_macierzy(liczba_miast);
+			macierz_kosztow = losowanie_macierzy(liczba_miast);
 
-				for (int i = 0; i < macierz_kosztow.size(); i++) {
-					for (int j = 0; j < macierz_kosztow[i].size(); j++) {
-						cout << macierz_kosztow[i][j] << " ";
-					}
-					cout << endl;
-				}
-				break;
+			for (int i = 0; i < macierz_kosztow.size(); i++) {
+				for (int j = 0; j < macierz_kosztow[i].size(); j++) {
+					cout << macierz_kosztow[i][j] << " ";
 			}
+				cout << endl;
+			}
+			break;
+		}
 
 		case 3: {
 			if (macierz_kosztow.empty()) {
@@ -177,7 +175,7 @@ int main() // aktualne zmiany ---------------- przed całą pętlą while wrzuca
 			}
 			// pomiar czasu brute force
 			auto start_brute = high_resolution_clock::now(); // poczatek pomiaru czasu
-			int minimalny_koszt_brute = brute_force(macierz_kosztow, najlepsza_sciezka_brute);
+			int minimalny_koszt_brute = brute_force(macierz_kosztow, najlepsza_sciezka_brute, liczba_miast);
 			auto stop_brute = high_resolution_clock::now(); // koniec pomiaru czasu
 			auto czas_wykonania_brute = duration_cast<milliseconds>(stop_brute - start_brute); // obliczenie czasu
 
@@ -191,11 +189,11 @@ int main() // aktualne zmiany ---------------- przed całą pętlą while wrzuca
 		case 4: {
 			if (macierz_kosztow.empty()) {
 				cout << "Najpierw nalezy wczytac / wygenerowac macierz!" << endl;
-				//break;
+				break;
 			}
 			// pomiar czasu branch and bound
 			auto start_bnb = high_resolution_clock::now(); // poczatek pomiaru czasu
-			int minimalny_koszt_bnb = branch_and_bound_main(macierz_kosztow, najlepsza_sciezka_bnb);
+			int minimalny_koszt_bnb = branch_and_bound_main(macierz_kosztow, najlepsza_sciezka_bnb,	liczba_miast);
 			auto stop_bnb = high_resolution_clock::now(); // koniec pomiaru czasu
 			auto czas_wykonania_bnb = duration_cast<milliseconds>(stop_bnb - start_bnb); // obliczenie czasu
 
@@ -207,12 +205,20 @@ int main() // aktualne zmiany ---------------- przed całą pętlą while wrzuca
 		}
 
 		case 5: {
+			if (macierz_kosztow.empty()) {
+				cout << "Najpierw nalezy wczytac / wygenerowac macierz!" << endl;
+			}
+
+			break;
+		}
+
+		case 6: {
 			cout << "Koniec programu." << endl;
 			petla = 0;
 			break;
 		}
 		default:
-			cout << "Zly wybor, nalezalo wpisac \"1\" lub \"2\" lub \"3\" lub \"4\" lub \"5\"." << endl;
+			cout << "Zly wybor, nalezalo wpisac \"1\" lub \"2\" lub \"3\" lub \"4\" lub \"5\" lub \"6\"." << endl;
 		}
 	}
 	return 0;
