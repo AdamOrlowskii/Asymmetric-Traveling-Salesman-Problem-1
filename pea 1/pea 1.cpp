@@ -6,6 +6,7 @@
 #include <fstream>
 #include <chrono>
 #include <limits>
+#include <cmath>
 using namespace std;
 using namespace std::chrono;
 
@@ -105,6 +106,102 @@ int branch_and_bound_main(const vector<vector<int>>& macierz_kosztow, vector<int
 	return najlepszy_koszt;
 }
 
+
+#include <iostream>
+#include <vector>
+#include <climits>
+#include <algorithm>
+
+using namespace std;
+
+int programowanie_dynamiczne(vector<vector<int>> macierz_kosztow, vector<int> &najlepsza_sciezka_dp, int liczba_miast) {
+    int liczba_podzbiorow = 1 << liczba_miast; // maska 2^liczba_miast
+    int minimalny_koszt = INT_MAX;
+    int koncowa_maska = (1 << liczba_miast) - 1; // maska gdy wszystkie miasta są odwiedzone
+
+    // Tworzymy kopię macierzy kosztów, w której zastępujemy -1 wartościami INT_MAX
+    for (int i = 0; i < liczba_miast; i++) {
+        for (int j = 0; j < liczba_miast; j++) {
+            if (macierz_kosztow[i][j] == -1 && i != j) {
+				macierz_kosztow[i][j] = INT_MAX; // brak połączenia między miastami
+            }
+        }
+    }
+
+    // Tablica dp: dp[miasto][maska] - minimalny koszt do miasta przy danej masce odwiedzonych miast
+    vector<vector<int>> dp(liczba_miast, vector<int>(liczba_podzbiorow, INT_MAX));
+    vector<vector<int>> skad_przyszedlem(liczba_miast, vector<int>(liczba_podzbiorow, -1)); // Tablica do śledzenia poprzednich miast
+
+    dp[0][1] = 0; // Startujemy z miasta 0, koszt do miasta 0 wynosi 0
+
+    // Budowanie tabeli DP
+    for (int maska = 1; maska < liczba_podzbiorow; maska++) {
+        for (int miasto_docelowe = 0; miasto_docelowe < liczba_miast; miasto_docelowe++) {
+            if (!(maska & (1 << miasto_docelowe))) continue; // Jeżeli miasto_docelowe nie jest w masce, pomijamy
+
+            for (int miasto = 0; miasto < liczba_miast; miasto++) {
+                if (miasto == miasto_docelowe || !(maska & (1 << miasto))) continue; // Pomijamy, jeśli miasto nie jest w masce lub jest miastem docelowym
+
+                int poprzednia_maska = maska ^ (1 << miasto_docelowe);
+                if (dp[miasto][poprzednia_maska] == INT_MAX || macierz_kosztow[miasto][miasto_docelowe] == INT_MAX) {
+                    continue; // Pomijamy, jeśli nie ma połączenia lub koszt jest nieskończonością
+                }
+
+                int nowy_koszt = dp[miasto][poprzednia_maska] + macierz_kosztow[miasto][miasto_docelowe];
+                if (nowy_koszt < dp[miasto_docelowe][maska]) {
+                    dp[miasto_docelowe][maska] = nowy_koszt;
+                    skad_przyszedlem[miasto_docelowe][maska] = miasto; // Zapisujemy skąd przyszliśmy
+                }
+            }
+        }
+    }
+
+    // Szukanie minimalnego kosztu powrotu do startu
+    for (int i = 1; i < liczba_miast; i++) {
+        if (dp[i][koncowa_maska] != INT_MAX && macierz_kosztow[i][0] != INT_MAX) {
+            minimalny_koszt = min(minimalny_koszt, dp[i][koncowa_maska] + macierz_kosztow[i][0]);
+        }
+    }
+
+    // Konstrukcja najlepszej ścieżki
+    int maska = koncowa_maska;
+    int ostatni = -1;
+    for (int i = 1; i < liczba_miast; i++) {
+        if (dp[i][koncowa_maska] + macierz_kosztow[i][0] == minimalny_koszt) {
+            ostatni = i;
+            break;
+        }
+    }
+
+    // Debugging: Jeśli nie znaleźliśmy ścieżki
+    if (ostatni == -1) {
+        cout << "Blad: Nie znaleziono najkrotszej trasy." << endl;
+        return -1;
+    }
+
+    najlepsza_sciezka_dp.push_back(0); // Zaczynamy od miasta 0
+    while (ostatni != -1) {
+        najlepsza_sciezka_dp.push_back(ostatni);
+        int poprzednia_maska = maska ^ (1 << ostatni);
+        maska = poprzednia_maska;
+        ostatni = skad_przyszedlem[ostatni][maska];
+    }
+
+    // Odwracamy ścieżkę, aby była w porządku rosnącym
+    reverse(najlepsza_sciezka_dp.begin(), najlepsza_sciezka_dp.end());
+
+    // Debugging: Wypisanie najlepszej ścieżki
+    cout << "Najlepsza sciezka: ";
+    for (int miasto : najlepsza_sciezka_dp) {
+        cout << miasto << " ";
+    }
+    cout << endl;
+
+    return minimalny_koszt;
+}
+
+
+
 //void zapis_do_csv(const string& nazwa_pliku, int liczba_miast, int czas_brute, int koszt_brute, int czas_bnb, int koszt_bnb) {
 //	ofstream plik_csv(nazwa_pliku, ios::app);
 //	if (!plik_csv.is_open()) {
@@ -125,6 +222,7 @@ int main() // aktualne zmiany ---------------- przed całą pętlą while wrzuca
 	vector<vector<int>> macierz_kosztow;
 	vector<int> najlepsza_sciezka_brute;
 	vector<int> najlepsza_sciezka_bnb;
+	vector<int> najlepsza_sciezka_dp;
 	string nazwa_pliku_csv = "wyniki.csv";
 	ofstream plik_csv(nazwa_pliku_csv);
 	int liczba_miast = 0;
@@ -208,7 +306,17 @@ int main() // aktualne zmiany ---------------- przed całą pętlą while wrzuca
 			if (macierz_kosztow.empty()) {
 				cout << "Najpierw nalezy wczytac / wygenerowac macierz!" << endl;
 			}
+			najlepsza_sciezka_dp.clear();
 
+			//pomiar czasu programowania dynamicznego
+			auto start_dp = high_resolution_clock::now(); // poczatek pomiaru czasu
+			int minimalny_koszt_dp = programowanie_dynamiczne(macierz_kosztow, najlepsza_sciezka_dp, liczba_miast);
+			auto stop_dp = high_resolution_clock::now(); // koniec pomiaru czasu
+			auto czas_wykonania_dp = duration_cast<milliseconds>(stop_dp - start_dp); // obliczenie czasu
+			cout << "Minimalny koszt programowania dynamicznego: " << minimalny_koszt_dp << endl;
+			cout << "Najkrotsza sciezka programowania dynamicznego: ";
+			for (int miasto : najlepsza_sciezka_dp) cout << miasto << " ";
+			cout << "\nCzas wykonania programowania dynamicznego: " << czas_wykonania_dp.count() << " ms\n" << endl;
 			break;
 		}
 
