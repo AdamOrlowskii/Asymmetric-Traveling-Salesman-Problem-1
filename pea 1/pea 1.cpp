@@ -106,12 +106,6 @@ int branch_and_bound_main(const vector<vector<int>>& macierz_kosztow, vector<int
 	return najlepszy_koszt;
 }
 
-
-#include <iostream>
-#include <vector>
-#include <climits>
-#include <algorithm>
-
 using namespace std;
 
 int programowanie_dynamiczne(vector<vector<int>> macierz_kosztow, vector<int> &najlepsza_sciezka_dp, int liczba_miast) {
@@ -202,15 +196,15 @@ int programowanie_dynamiczne(vector<vector<int>> macierz_kosztow, vector<int> &n
 
 
 
-//void zapis_do_csv(const string& nazwa_pliku, int liczba_miast, int czas_brute, int koszt_brute, int czas_bnb, int koszt_bnb) {
-//	ofstream plik_csv(nazwa_pliku, ios::app);
-//	if (!plik_csv.is_open()) {
-//		cout << "Blad otwierania pliku csv" << endl;
-//		return;
-//	}
-//	plik_csv <<"\n" << liczba_miast << ";" << koszt_brute << ";" << czas_brute << ";" << koszt_bnb << ";" << czas_bnb;
-//	plik_csv.close();
-//}
+void zapis_do_csv(const string& nazwa_pliku, int liczba_miast, int czas_brute, int koszt_brute, int czas_bnb, int koszt_bnb, int czas_wykonania_dp, int minimalny_koszt_dp) {
+	ofstream plik_csv(nazwa_pliku, ios::app);
+	if (!plik_csv.is_open()) {
+		cout << "Blad otwierania pliku csv" << endl;
+		return;
+	}
+	plik_csv <<"\n" << liczba_miast << ";" << koszt_brute << ";" << czas_brute << ";" << koszt_bnb << ";" << czas_bnb << ";" << minimalny_koszt_dp << ";" << czas_wykonania_dp;
+	plik_csv.close();
+}
 
 int main() // aktualne zmiany ---------------- przed całą pętlą while wrzucam pytanie o wczytanie/wygenerowanie macierzy. Powinno to załatwić problem menu
 // ----------- nie załatwi, trzeba przebudować całego maina by pełne menu wyświetlało się po każdej decyzji
@@ -232,7 +226,7 @@ int main() // aktualne zmiany ---------------- przed całą pętlą while wrzuca
 	while (petla == 1) {
 		
 		int menu = 0;
-		cout << "MENU:\n1. Wczytaj plik tekstowy.\n2. Wygeneruj dane losowo.\n3. Brute Force. \n4. Branch and Bound. \n5. Programowanie dynamiczne. \n6. Koniec." << endl; // opcje całego menu
+		cout << "MENU:\n1. Wczytaj plik tekstowy.\n2. Wygeneruj dane losowo.\n3. Brute Force. \n4. Branch and Bound. \n5. Programowanie dynamiczne. \n6. Tryb do sprawozdania. \n7. Koniec." << endl; // opcje całego menu
 		cin >> menu;
 
 		switch (menu) {
@@ -321,12 +315,48 @@ int main() // aktualne zmiany ---------------- przed całą pętlą while wrzuca
 		}
 
 		case 6: {
+			int ilosc = 0;
+			cout << "Ilosc powtorzen: ";
+			cin >> ilosc;
+			cout << "\nLiczba miast: ";
+			cin >> liczba_miast;
+
+			for (int i = 0; i < ilosc; i++) {
+				macierz_kosztow = losowanie_macierzy(liczba_miast);
+
+				for (int i = 0; i < macierz_kosztow.size(); i++) {
+					for (int j = 0; j < macierz_kosztow[i].size(); j++) {
+						cout << macierz_kosztow[i][j] << " ";
+					}
+					cout << endl;
+				}
+			auto start_brute = high_resolution_clock::now(); // poczatek pomiaru czasu
+			int minimalny_koszt_brute = brute_force(macierz_kosztow, najlepsza_sciezka_brute, liczba_miast);
+			auto stop_brute = high_resolution_clock::now(); // koniec pomiaru czasu
+			auto czas_wykonania_brute = duration_cast<milliseconds>(stop_brute - start_brute); // obliczenie czasu
+
+			auto start_bnb = high_resolution_clock::now(); // poczatek pomiaru czasu
+			int minimalny_koszt_bnb = branch_and_bound_main(macierz_kosztow, najlepsza_sciezka_bnb, liczba_miast);
+			auto stop_bnb = high_resolution_clock::now(); // koniec pomiaru czasu
+			auto czas_wykonania_bnb = duration_cast<milliseconds>(stop_bnb - start_bnb); // obliczenie czasu
+
+			auto start_dp = high_resolution_clock::now(); // poczatek pomiaru czasu
+			int minimalny_koszt_dp = programowanie_dynamiczne(macierz_kosztow, najlepsza_sciezka_dp, liczba_miast);
+			auto stop_dp = high_resolution_clock::now(); // koniec pomiaru czasu
+			auto czas_wykonania_dp = duration_cast<milliseconds>(stop_dp - start_dp); // obliczenie czasu
+
+			zapis_do_csv(nazwa_pliku_csv, liczba_miast, czas_wykonania_brute.count(), minimalny_koszt_brute, czas_wykonania_bnb.count(), minimalny_koszt_bnb, czas_wykonania_dp.count(), minimalny_koszt_dp);
+			}
+			break;
+		}
+
+		case 7: {
 			cout << "Koniec programu." << endl;
 			petla = 0;
 			break;
 		}
 		default:
-			cout << "Zly wybor, nalezalo wpisac \"1\" lub \"2\" lub \"3\" lub \"4\" lub \"5\" lub \"6\"." << endl;
+			cout << "Zly wybor" << endl;
 		}
 	}
 	return 0;
