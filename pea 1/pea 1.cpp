@@ -111,15 +111,6 @@ int programowanie_dynamiczne(vector<vector<int>> macierz_kosztow, vector<int>& n
 	int minimalny_koszt = INT_MAX;
 	int koncowa_maska = (1 << liczba_miast) - 1; // maska gdy wszystkie miasta są odwiedzone
 
-	// Tworzymy kopię macierzy kosztów, w której zastępujemy -1 wartościami INT_MAX
-	for (int i = 0; i < liczba_miast; i++) {
-		for (int j = 0; j < liczba_miast; j++) {
-			if (macierz_kosztow[i][j] == -1 && i != j) {
-				macierz_kosztow[i][j] = INT_MAX; // brak połączenia między miastami
-			}
-		}
-	}
-
 	// Tablica dp: dp[miasto][maska] - minimalny koszt do miasta przy danej masce odwiedzonych miast
 	vector<vector<int>> dp(liczba_miast, vector<int>(liczba_podzbiorow, INT_MAX));
 	vector<vector<int>> skad_przyszedlem(liczba_miast, vector<int>(liczba_podzbiorow, -1)); // Tablica do śledzenia poprzednich miast
@@ -134,10 +125,11 @@ int programowanie_dynamiczne(vector<vector<int>> macierz_kosztow, vector<int>& n
 			for (int miasto = 0; miasto < liczba_miast; miasto++) {
 				if (miasto == miasto_docelowe || !(maska & (1 << miasto))) continue; // Pomijamy, jeśli miasto nie jest w masce lub jest miastem docelowym
 
+				// Ignorujemy brak połączenia (koszt -1)
+				if (macierz_kosztow[miasto][miasto_docelowe] == -1) continue;
+
 				int poprzednia_maska = maska ^ (1 << miasto_docelowe);
-				if (dp[miasto][poprzednia_maska] == INT_MAX || macierz_kosztow[miasto][miasto_docelowe] == INT_MAX) {
-					continue; // Pomijamy, jeśli nie ma połączenia lub koszt jest nieskończonością
-				}
+				if (dp[miasto][poprzednia_maska] == INT_MAX) continue;
 
 				int nowy_koszt = dp[miasto][poprzednia_maska] + macierz_kosztow[miasto][miasto_docelowe];
 				if (nowy_koszt < dp[miasto_docelowe][maska]) {
@@ -151,19 +143,13 @@ int programowanie_dynamiczne(vector<vector<int>> macierz_kosztow, vector<int>& n
 	// Szukanie minimalnego kosztu powrotu do startu
 	int ostatni = -1;
 	for (int i = 1; i < liczba_miast; i++) {
-		if (dp[i][koncowa_maska] != INT_MAX && macierz_kosztow[i][0] != INT_MAX) {
+		if (dp[i][koncowa_maska] != INT_MAX && macierz_kosztow[i][0] != -1) {
 			int koszt_powrotu = dp[i][koncowa_maska] + macierz_kosztow[i][0];
 			if (koszt_powrotu < minimalny_koszt) {
 				minimalny_koszt = koszt_powrotu;
 				ostatni = i;
 			}
 		}
-	}
-
-	// Debugging: Jeśli nie znaleźliśmy ścieżki
-	if (ostatni == -1) {
-		cout << "Blad: Nie znaleziono najkrotszej trasy." << endl;
-		return -1;
 	}
 
 	// Konstrukcja najlepszej ścieżki
@@ -181,8 +167,10 @@ int programowanie_dynamiczne(vector<vector<int>> macierz_kosztow, vector<int>& n
 	// Odwracamy ścieżkę, aby była we właściwej kolejności
 	reverse(najlepsza_sciezka_dp.begin(), najlepsza_sciezka_dp.end());
 
-	return minimalny_koszt;
-}
+
+		return minimalny_koszt;
+	}
+
 
 void zapis_do_csv(const string& nazwa_pliku, int liczba_miast, int czas_brute, int koszt_brute, int czas_bnb, int koszt_bnb, int czas_wykonania_dp, int minimalny_koszt_dp) {
 	ofstream plik_csv(nazwa_pliku, ios::app);
@@ -314,22 +302,22 @@ int main()
 					}
 					cout << endl;
 				}
-			auto start_brute = high_resolution_clock::now(); // poczatek pomiaru czasu
-			int minimalny_koszt_brute = brute_force(macierz_kosztow, najlepsza_sciezka_brute, liczba_miast);
-			auto stop_brute = high_resolution_clock::now(); // koniec pomiaru czasu
-			auto czas_wykonania_brute = duration_cast<milliseconds>(stop_brute - start_brute); // obliczenie czasu
+			//auto start_brute = high_resolution_clock::now(); // poczatek pomiaru czasu
+			//int minimalny_koszt_brute = brute_force(macierz_kosztow, najlepsza_sciezka_brute, liczba_miast);
+			//auto stop_brute = high_resolution_clock::now(); // koniec pomiaru czasu
+			//auto czas_wykonania_brute = duration_cast<milliseconds>(stop_brute - start_brute); // obliczenie czasu
 
-			auto start_bnb = high_resolution_clock::now(); // poczatek pomiaru czasu
-			int minimalny_koszt_bnb = branch_and_bound_main(macierz_kosztow, najlepsza_sciezka_bnb, liczba_miast);
-			auto stop_bnb = high_resolution_clock::now(); // koniec pomiaru czasu
-			auto czas_wykonania_bnb = duration_cast<milliseconds>(stop_bnb - start_bnb); // obliczenie czasu
+			//auto start_bnb = high_resolution_clock::now(); // poczatek pomiaru czasu
+			//int minimalny_koszt_bnb = branch_and_bound_main(macierz_kosztow, najlepsza_sciezka_bnb, liczba_miast);
+			//auto stop_bnb = high_resolution_clock::now(); // koniec pomiaru czasu
+			//auto czas_wykonania_bnb = duration_cast<milliseconds>(stop_bnb - start_bnb); // obliczenie czasu
 
 			auto start_dp = high_resolution_clock::now(); // poczatek pomiaru czasu
 			int minimalny_koszt_dp = programowanie_dynamiczne(macierz_kosztow, najlepsza_sciezka_dp, liczba_miast);
 			auto stop_dp = high_resolution_clock::now(); // koniec pomiaru czasu
 			auto czas_wykonania_dp = duration_cast<milliseconds>(stop_dp - start_dp); // obliczenie czasu
 
-			zapis_do_csv(nazwa_pliku_csv, liczba_miast, czas_wykonania_brute.count(), minimalny_koszt_brute, czas_wykonania_bnb.count(), minimalny_koszt_bnb, czas_wykonania_dp.count(), minimalny_koszt_dp);
+			zapis_do_csv(nazwa_pliku_csv, liczba_miast, /*czas_wykonania_brute.count() = */ 0, /*minimalny_koszt_brute*/ 0, /*czas_wykonania_bnb.count()*/ 0, /*minimalny_koszt_bnb*/ 0, czas_wykonania_dp.count(), minimalny_koszt_dp);
 			}
 			break;
 		}
