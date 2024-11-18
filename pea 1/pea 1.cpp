@@ -317,7 +317,7 @@ int main()
 			auto stop_dp = high_resolution_clock::now(); // koniec pomiaru czasu
 			auto czas_wykonania_dp = duration_cast<milliseconds>(stop_dp - start_dp); // obliczenie czasu
 
-			zapis_do_csv(nazwa_pliku_csv, liczba_miast, /*czas_wykonania_brute.count() = */ 0, /*minimalny_koszt_brute*/ 0, /*czas_wykonania_bnb.count()*/ 0, /*minimalny_koszt_bnb*/ 0, czas_wykonania_dp.count(), minimalny_koszt_dp);
+			zapis_do_csv(nazwa_pliku_csv, liczba_miast, czas_wykonania_brute.count(), minimalny_koszt_brute, czas_wykonania_bnb.count(), minimalny_koszt_bnb, czas_wykonania_dp.count(), minimalny_koszt_dp);
 			}
 			break;
 		}
